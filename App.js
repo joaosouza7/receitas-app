@@ -1,17 +1,12 @@
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text } from "react-native";
+import { NavigationContainer } from "@react-navigation/native";
+
+import { Routes } from "./src/routes";
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Text>Hello Word!</Text>
-    </View>
+    <NavigationContainer>
+      <Routes />
+    </NavigationContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center"
-  }
-})
