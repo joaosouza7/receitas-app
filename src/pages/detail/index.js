@@ -1,10 +1,13 @@
-import { useLayoutEffect } from "react";
-import { View, Text, StyleSheet, Pressable, ScrollView, Image, FlatList } from "react-native";
+import { useLayoutEffect, useState } from "react";
+import { View, Text, StyleSheet, Pressable, ScrollView, Image, Modal, Share } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { Ionicons, AntDesign, Feather } from "@expo/vector-icons";
 
 import { Ingredients } from "../../components/ingredients";
 import { Instructions } from "../../components/instructions";
+import { VideoView } from "../../components/video";
+
+import { isFavorite, saveFavorite, removeItem } from "../../utils/storage";
 
 export function Detail() {
 
@@ -13,26 +16,69 @@ export function Detail() {
 
     const item = route.params?.data;
 
+    const [showVideo, setShowVideo] = useState(false);
+    const [favorite, setFavorite] = useState(false);
+
     useLayoutEffect(() => {
 
+        async function getStatusFavorite() {
+            const receipeFavorite = await isFavorite(item);
+            setFavorite(receipeFavorite);
+        }
+
+        getStatusFavorite();
+
         navigation.setOptions({
-            title: route.params?.data ? route.params?.data.name : "Detalhes da receita",
+            title: item ? item.name : "Detalhes da receita",
             headerRight: () => (
-                <Pressable onPress={ () => console.log("Testando!") }>
-                    <Ionicons 
-                        name="heart"
-                        size={28}
-                        color="#FF4141"
-                    />
+                <Pressable onPress={ () => handleFavoriteReceipe(item) }>
+                    { favorite ? (
+                        <Ionicons 
+                            name="heart"
+                            size={28}
+                            color="#FF4141"
+                        />
+                    ) : (
+                        <Ionicons 
+                            name="heart-outline"
+                            size={28}
+                            color="#FF4141"
+                        />
+                    )}
                 </Pressable>
             )
         })
 
-    }, [navigation, route.params?.data])
+    }, [navigation, item, favorite]);
+
+    async function handleFavoriteReceipe(receipe) {
+        if(favorite) {
+            await removeItem(receipe.id);
+            setFavorite(false);
+        } else {
+            await saveFavorite("@appreceitas", receipe);
+            setFavorite(true);
+        }
+    }
+
+    function handleOpenVideo() {
+        setShowVideo(true);
+    }
+
+    async function shareReceipe() {
+        try {
+            await Share.share({
+                url: "https://sujeitoprogramador.com",
+                message: `Receita: ${item.name}\nIngredientes: ${item.total_ingredients}\nVi lá no app Receita fácil`
+            })
+        }catch(error) {
+            console.log(error);
+        }
+    }
 
     return (
         <ScrollView contentContainerStyle={{ paddingBottom: 14 }} style={styles.container} showsVerticalScrollIndicator={false}>
-            <Pressable>
+            <Pressable onPress={handleOpenVideo}>
                 <View style={styles.playIcon}>
                     <AntDesign name="playcircleo" size={48} color="#FAFAFA" />
                 </View>
@@ -49,7 +95,7 @@ export function Detail() {
                     <Text style={styles.ingredientsText}>Ingredientes ({item.total_ingredients})</Text>
                 </View>
 
-                <Pressable>
+                <Pressable onPress={shareReceipe}>
                     <Feather name="share-2" size={24} color="#121212" />
                 </Pressable>
             </View>
@@ -70,6 +116,13 @@ export function Detail() {
             {item.instructions.map( (item, index) => (
                 <Instructions key={item.id} data={item} index={index} />
             ) )}
+
+            <Modal visible={showVideo} animationType="slide">
+                <VideoView 
+                    handleClose={ () => setShowVideo(false) }
+                    videoUrl={item.video}
+                />
+            </Modal>
 
         </ScrollView>
     );
