@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { View, Text, StyleSheet, SafeAreaView, TextInput, TouchableOpacity, FlatList } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 
 import { Logo } from "../../components/logo";
@@ -11,6 +12,8 @@ export function Home() {
 
     const [inputValue, setInputValue] = useState("");
     const [foods, setFoods] = useState([]);
+
+    const navigation = useNavigation();
 
     useEffect(() => {
 
@@ -24,7 +27,12 @@ export function Home() {
     }, [])
 
     function handleSearch() {
-        console.log("Você digitou: " + inputValue);
+
+        if(!inputValue) return;
+
+        let input = inputValue;
+        setInputValue("");
+        navigation.navigate("Search", { name: input })
     }
 
     return (
